@@ -23,6 +23,7 @@
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
+#include<opencv2/imgproc/types_c.h>
 
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
@@ -34,8 +35,8 @@
 #include"PnPsolver.h"
 
 #include<iostream>
-
 #include<mutex>
+#include<unistd.h>
 
 
 using namespace std;
@@ -916,7 +917,7 @@ bool Tracking::TrackWithMotionModel()
             else if(mCurrentFrame.mvpMapPoints[i]->Observations()>0)
                 nmatchesMap++;
         }
-    }    
+    }
 
     if(mbOnlyTracking)
     {
