@@ -23,8 +23,11 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
+#include<future>
+#include<thread>
 
 #include<opencv2/core/core.hpp>
+#include<opencv2/imgcodecs/legacy/constants_c.h>
 
 #include<System.h>
 
@@ -33,6 +36,8 @@ using namespace std;
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames,
                 vector<double> &vTimestamps);
 
+int processing(char **argv, ORB_SLAM2::System *slamPtr);
+
 int main(int argc, char **argv)
 {
     if(argc != 4)
@@ -40,7 +45,17 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_sequence" << endl;
         return 1;
     }
-
+  
+    // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+    auto resultFuture = async(launch::async, processing, argv, &SLAM);
+    SLAM.RunViewer();
+    return resultFuture.get();
+}
+  
+int processing(char **argv, ORB_SLAM2::System *slamPtr) {
+    ORB_SLAM2::System& SLAM = *slamPtr;
+  
     // Retrieve paths to images
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
@@ -48,9 +63,6 @@ int main(int argc, char **argv)
     LoadImages(strFile, vstrImageFilenames, vTimestamps);
 
     int nImages = vstrImageFilenames.size();
-
-    // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -101,8 +113,9 @@ int main(int argc, char **argv)
         else if(ni>0)
             T = tframe-vTimestamps[ni-1];
 
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+        if(ttrack<T) {
+            std::this_thread::sleep_for(std::chrono::duration<double, std::micro>((T-ttrack)*1e6));
+        }
     }
 
     // Stop all threads
