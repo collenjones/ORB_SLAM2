@@ -15,6 +15,15 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j
 
+cd ../../Pangolin
+
+echo "Configuring and building Thirdparty/Pangolin ..."
+
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_PANGOLIN_LIBOPENEXR=OFF
+make -j
+
 cd ../../../
 
 echo "Uncompress vocabulary ..."
